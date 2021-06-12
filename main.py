@@ -1,12 +1,11 @@
 import numpy as np
-from PIL import Image as im
 import photo_manipulation as ph
 
 if __name__ == "__main__":
     photo_name = "ED_01.jpg"
-    pic = ph.color_image("photos/" + photo_name)
+    pic = ph.Color("photos/" + photo_name)
     pic = pic.get_grayscale(lambda r, g, b: b)
-    # pic.r = ph.grayscale(np.zeros([pic.height,pic.width]))
+    # pic.r = ph.Grayscale(np.zeros([pic.height,pic.width]))
     # pic = pic.get_grayscale(lambda r, g, b: (r+2*g+2*b)/5)
     # height = pic.height
     # width = pic.width

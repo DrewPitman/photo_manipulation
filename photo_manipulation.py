@@ -1,5 +1,5 @@
 import numpy as np
-from PIL import Image as im
+from PIL import Image as Im
 
 
 # for an input x, returns the nearest value to x on the interval [0, 255]
@@ -15,10 +15,10 @@ def pad(array, row, col, value=0):
     return padded_array
 
 
-# given 3 grayscale objects representing the color fields of a single photo -- "r" representing red,
-# "g" representing green, and "b" representing blue -- returns a color_image object with those color fields.
+# given 3 Grayscale objects representing the color fields of a single photo -- "r" representing red,
+# "g" representing green, and "b" representing blue -- returns a Color object with those color fields.
 def grayscale_to_color(r, g, b):
-    return color_image(
+    return Color(
         np.array([[[r.array[i, j], g.array[i, j], b.array[i, j]] for j in range(r.width)] for i in range(r.height)]))
 
 
@@ -68,16 +68,17 @@ def gaus_vec(radius):
     vector = np.array([[gaussian(i - radius) for i in range(2 * radius + 1)]])
     return vector / sum(sum(vector))
 
-# a class representing grayscale images
-class grayscale:
+
+# a class representing Grayscale images
+class Grayscale:
     def __init__(self, array):
         self.array = np.array(array).astype(np.uint8)
         self.height = len(array)
         self.width = len(array[0])
 
-    # converts the grayscale image to a color_image object
+    # converts the Grayscale image to a Color object
     def get_color_image(self):
-        return color_image(np.array([[[x, x, x] for x in A_row] for A_row in self.array]))
+        return Color(np.array([[[x, x, x] for x in A_row] for A_row in self.array]))
 
     # displays the image
     def show(self):
@@ -110,7 +111,7 @@ class grayscale:
     def vec_blur(self, vector):
         # vectors must be 2d, e.g. np.array([[1,1,1]]) with two sets of brackets
         array = convolve(self.array, vector)
-        array = convolve(self.array, vector.transpose())
+        array = convolve(array, vector.transpose())
         self.array = array.astype(np.uint8)
 
     # slower blur operation returning a convolution of the image with an input kernel
@@ -129,21 +130,21 @@ class grayscale:
         horiz_edges = convolve(self.array, sobel.transpose())
         return [vert_edges, horiz_edges]
 
-    # returns a color_image object which uses color to represent the output of edge_detection
+    # returns a Color object which uses color to represent the output of edge_detection
     def rgb_edges(self):
         [vert_edges, horiz_edges] = self.edge_detection()
         green = np.full((self.height, self.width), 128)
-        red = grayscale(limiter(green + vert_edges))
-        blue = grayscale(limiter(green + horiz_edges))
-        green = grayscale(green)
+        red = Grayscale(limiter(green + vert_edges))
+        blue = Grayscale(limiter(green + horiz_edges))
+        green = Grayscale(green)
         return grayscale_to_color(red, blue, green)
 
-    # detects the edges of the image and returns a grayscale object consisting of
+    # detects the edges of the image and returns a Grayscale object consisting of
     # a white background with black lines at the detected edges
     def sketch(self):
         [vert_edges, horiz_edges] = self.edge_detection()
         edges = np.sqrt(vert_edges ** 2 + horiz_edges ** 2)
-        return grayscale(255 - limiter(edges))
+        return Grayscale(255 - limiter(edges))
 
     # slowly performs a bokeh blur via array convolution with a bokeh matrix whose disks have the given radius
     def bokeh_blur(self, radius):
@@ -181,34 +182,34 @@ class grayscale:
 
 
 # a class for rgb-valued images
-class color_image:
+class Color:
     def __init__(self, photo):
         if type(photo) is np.ndarray:
             self.rgb = photo
         elif type(photo) is str:
-            self.rgb = np.asarray(im.open(photo))
+            self.rgb = np.asarray(Im.open(photo))
         else:
             self.rgb = np.asarray(photo)
-        self.r = grayscale(self.rgb[:, :, 0])
-        self.g = grayscale(self.rgb[:, :, 1])
-        self.b = grayscale(self.rgb[:, :, 2])
+        self.r = Grayscale(self.rgb[:, :, 0])
+        self.g = Grayscale(self.rgb[:, :, 1])
+        self.b = Grayscale(self.rgb[:, :, 2])
         self.height = self.r.height
         self.width = self.r.width
 
     # displays the image
     def show(self):
-        im.fromarray(self.rgb).show()
+        Im.fromarray(self.rgb).show()
 
     # saves the image under the filename given by location
     def save(self, location):
-        im.fromarray(self.rgb).save(location)
+        Im.fromarray(self.rgb).save(location)
 
-    # converts the image to a grayscale image by applying the function func to each pixel
-    def get_grayscale(self, func=lambda r,g,b:(r+2*g+b)/4):
+    # converts the image to a Grayscale image by applying the function func to each pixel
+    def get_grayscale(self, func=lambda r, g, b: (r + 2 * g + b) / 4):
         # may need to rewrite in order to accommodate max and min functions
         gray_array = func(self.r.array.astype(int), self.g.array.astype(int),
                           self.b.array.astype(int))
-        return grayscale(limiter(gray_array))
+        return Grayscale(limiter(gray_array))
 
     # deletes self.rgb and reforms it from self.r, self.g, and self.b
     def refresh_rgb(self):
@@ -233,8 +234,8 @@ class color_image:
         self.refresh_rgb()
 
     # Takes 3 functions as input. Each function takes 3 numerical inputs and gives one numerical output.
-    # Each of these functions is used to produce a distinct grayscale image from the original rgb color image.
-    # these 3 grayscale images then become the r, g, and b fields of the object.
+    # Each of these functions is used to produce a distinct Grayscale image from the original rgb color image.
+    # these 3 Grayscale images then become the r, g, and b fields of the object.
     def tint(self, rfunc, gfunc, bfunc):
         red = self.get_grayscale(rfunc)
         green = self.get_grayscale(gfunc)
